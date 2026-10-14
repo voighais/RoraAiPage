@@ -1,0 +1,2480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a12">
+<meta name="description" content="Rora — local AI agent with full access to your computer. Free, offline, no API keys.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a0a12'/%3E%3Ctext x='32' y='47' font-family='Arial Black,Arial,sans-serif' font-size='46' font-weight='900' fill='%2364aaff' text-anchor='middle'%3ER%3C/text%3E%3C/svg%3E">
+<title>Rora</title>
+<style>
+  :root {
+    --accent: #64aaff;
+    --accent-light: #96d2ff;
+    --accent-deep: #2349b4;
+    --accent-soft: rgba(100,170,255,0.12);
+    --accent-border: rgba(100,170,255,0.30);
+    --accent-glow: rgba(100,170,255,0.45);
+    --purple: #aa5adc;
+    --purple-deep: #642896;
+    --purple-soft: rgba(170,90,220,0.12);
+    --green: #78dc96;
+    --red: #f08282;
+    --yellow: #f0d278;
+    --bg: #0a0a12;
+    --bg-2: #10101a;
+    --bg-3: #16161f;
+    --bg-nav: rgba(10,10,18,0.72);
+    --text: #e6ebf5;
+    --text-dim: #8892a6;
+    --text-dimmer: #4a5264;
+    --border: rgba(255,255,255,0.07);
+    --border-strong: rgba(255,255,255,0.13);
+    --radius: 18px;
+    --radius-sm: 12px;
+    --max: 1180px;
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI",
+                 Roboto, "Helvetica Neue", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background 0.6s var(--ease), color 0.6s var(--ease);
+    min-height: 100vh;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  code, .mono {
+    font-family: "SF Mono", "Cascadia Code", "JetBrains Mono",
+                 "Consolas", "Menlo", monospace;
+  }
+
+  /* ============ NAV ============ */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 14px 24px;
+    background: var(--bg-nav);
+    backdrop-filter: saturate(180%) blur(16px);
+    -webkit-backdrop-filter: saturate(180%) blur(16px);
+    border-bottom: 1px solid var(--border);
+    transition: background 0.6s var(--ease), border-color 0.6s var(--ease),
+                padding 0.3s var(--ease);
+  }
+
+  .nav-inner {
+    max-width: var(--max);
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .nav-logo {
+    display: flex;
+    align-items: center;
+    font-weight: 700;
+    font-size: 19px;
+    letter-spacing: -0.02em;
+    flex-shrink: 0;
+    color: var(--text);
+    transition: color 0.25s ease, transform 0.25s var(--ease);
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .nav-logo::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--purple));
+    border-radius: 2px;
+    transition: width 0.35s var(--ease);
+  }
+
+  .nav-logo:hover {
+    color: var(--accent-light);
+    transform: translateY(-1px);
+  }
+
+  .nav-logo:hover::after { width: 100%; }
+
+  .nav-links {
+    display: flex;
+    gap: 26px;
+    font-size: 14px;
+    color: var(--text-dim);
+  }
+
+  .nav-links a {
+    transition: color 0.25s ease;
+    position: relative;
+  }
+
+  .nav-links a::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 2px;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.3s var(--ease);
+    box-shadow: 0 0 8px var(--accent-glow);
+  }
+
+  .nav-links a:hover { color: var(--text); }
+  .nav-links a:hover::after { width: 80%; }
+
+  .nav-social {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .nav-social a {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: var(--accent-soft);
+    border: 1px solid var(--border);
+    color: var(--accent-light);
+    transition: all 0.3s var(--ease-bounce);
+  }
+
+  .nav-social a:hover {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 20px var(--accent-glow);
+  }
+
+  .nav-social svg { width: 16px; height: 16px; fill: currentColor; }
+
+  /* ============ HERO ============ */
+  .hero {
+    padding: 150px 24px 90px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: 10%; left: 50%;
+    width: 700px; height: 700px;
+    transform: translate3d(-50%, 0, 0);
+    background: radial-gradient(circle, var(--accent-soft) 0%, transparent 65%);
+    pointer-events: none;
+    z-index: -1;
+    animation: hero-pulse 6s ease-in-out infinite;
+  }
+
+  @keyframes hero-pulse {
+    0%, 100% { transform: translate3d(-50%, 0, 0) scale(1); opacity: 0.7; }
+    50% { transform: translate3d(-50%, 0, 0) scale(1.15); opacity: 1; }
+  }
+
+  .hero-inner { max-width: var(--max); margin: 0 auto; position: relative; }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 100px;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-border);
+    color: var(--accent-light);
+    font-size: 12.5px;
+    font-weight: 500;
+    margin-bottom: 24px;
+    transition: transform 0.3s var(--ease-bounce);
+  }
+
+  .hero-badge:hover { transform: translateY(-2px); }
+
+  .hero-badge-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 10px var(--accent-glow);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.35; transform: scale(0.85); }
+  }
+
+  /* ============ HERO STATS ============ */
+  .hero-stats {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 30px;
+  }
+
+  .stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 18px;
+    border-radius: 100px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 13.5px;
+    transition: all 0.3s var(--ease-bounce);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg,
+                transparent, var(--accent-soft), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+  }
+
+  .stat:hover::before { transform: translateX(100%); }
+
+  .stat:hover {
+    border-color: var(--accent-border);
+    color: var(--text);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px var(--accent-soft);
+  }
+
+  .stat-icon {
+    width: 15px;
+    height: 15px;
+    fill: var(--accent);
+    flex-shrink: 0;
+    transition: transform 0.4s var(--ease-bounce);
+    position: relative;
+    z-index: 1;
+  }
+
+  .stat:hover .stat-icon {
+    transform: scale(1.2) rotate(15deg);
+  }
+
+  .stat-num {
+    font-family: "SF Mono", "Cascadia Code", "Consolas", monospace;
+    font-weight: 700;
+    color: var(--text);
+    font-size: 15px;
+    letter-spacing: -0.01em;
+    min-width: 20px;
+    text-align: left;
+    transition: color 0.3s ease;
+    position: relative;
+    z-index: 1;
+  }
+
+  .stat:hover .stat-num { color: var(--accent-light); }
+
+  .stat-label {
+    color: var(--text-dimmer);
+    font-size: 12.5px;
+    letter-spacing: 0.02em;
+    position: relative;
+    z-index: 1;
+  }
+
+  .stat-num.loading {
+    animation: stat-pulse 1.2s ease-in-out infinite;
+  }
+
+  @keyframes stat-pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+
+  .hero-title {
+    font-size: clamp(64px, 14vw, 156px);
+    font-weight: 800;
+    letter-spacing: -0.055em;
+    line-height: 0.9;
+    margin-bottom: 26px;
+    background: linear-gradient(135deg,
+                var(--accent-light) 0%,
+                var(--accent) 30%,
+                var(--purple) 60%,
+                var(--accent) 100%);
+    background-size: 250% 250%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    animation: gradient-shift 8s ease infinite;
+  }
+
+  @keyframes gradient-shift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  .hero-sub {
+    font-size: clamp(17px, 2.1vw, 22px);
+    color: var(--text-dim);
+    max-width: 640px;
+    margin: 0 auto 36px;
+    line-height: 1.5;
+  }
+
+  .hero-cta {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 44px;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 24px;
+    border-radius: 100px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: transform 0.3s var(--ease-bounce),
+                box-shadow 0.3s var(--ease),
+                background 0.25s ease,
+                border-color 0.25s ease;
+    font-family: inherit;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg,
+                transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.6s ease;
+  }
+
+  .btn:hover::before { left: 100%; }
+
+  .btn-primary { background: var(--accent); color: var(--bg); }
+
+  .btn-primary:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 15px 35px var(--accent-glow);
+  }
+
+  .btn-download {
+    background: var(--green);
+    color: var(--bg);
+  }
+
+  .btn-download:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 15px 35px rgba(120,220,150,0.45);
+  }
+
+  .btn-ghost {
+    background: var(--accent-soft);
+    border-color: var(--border-strong);
+    color: var(--text);
+  }
+
+  .btn-ghost:hover {
+    background: var(--accent-border);
+    transform: translateY(-3px) scale(1.02);
+  }
+
+  .hero-code {
+    max-width: 460px;
+    margin: 0 auto;
+    text-align: left;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 18px 22px;
+    font-size: 13.5px;
+    color: var(--text-dim);
+    transition: background 0.6s var(--ease), border-color 0.6s var(--ease),
+                transform 0.3s var(--ease);
+    position: relative;
+  }
+
+  .hero-code:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent-border);
+  }
+
+  .hero-code-line {
+    display: flex;
+    gap: 10px;
+    padding: 3px 0;
+    white-space: nowrap;
+    overflow-x: auto;
+    opacity: 0;
+    animation: line-fade 0.6s var(--ease) forwards;
+  }
+
+  .hero-code-line:nth-child(1) { animation-delay: 1.2s; }
+  .hero-code-line:nth-child(2) { animation-delay: 1.4s; }
+  .hero-code-line:nth-child(3) { animation-delay: 1.6s; }
+
+  @keyframes line-fade {
+    from { opacity: 0; transform: translateX(-8px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .hero-code-line::-webkit-scrollbar { display: none; }
+
+  .hero-code-prompt {
+    color: var(--accent);
+    user-select: none;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .hero-code-cmd { color: var(--text); }
+  .hero-code-comment { color: var(--text-dimmer); }
+
+  /* ============ SECTIONS ============ */
+  section { padding: 100px 24px; position: relative; }
+  .section-inner { max-width: var(--max); margin: 0 auto; }
+  .section-head { text-align: center; margin-bottom: 60px; }
+
+  .section-tag {
+    display: inline-block;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    margin-bottom: 14px;
+    transition: color 0.6s var(--ease);
+  }
+
+  .section-title {
+    font-size: clamp(32px, 5vw, 52px);
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    line-height: 1.05;
+    margin-bottom: 16px;
+  }
+
+  .section-sub {
+    font-size: clamp(15px, 1.5vw, 18px);
+    color: var(--text-dim);
+    max-width: 620px;
+    margin: 0 auto;
+    line-height: 1.55;
+  }
+
+  /* ============ TERMINAL ============ */
+  .terminal-wrap { max-width: 880px; margin: 0 auto; }
+
+  .terminal {
+    background: var(--bg-2);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.45);
+    transition: background 0.6s var(--ease), border-color 0.6s var(--ease),
+                transform 0.4s var(--ease), box-shadow 0.4s var(--ease);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .terminal:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 32px 70px rgba(0,0,0,0.55);
+  }
+
+  .terminal-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-3);
+    flex-shrink: 0;
+  }
+
+  .terminal-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: transform 0.2s var(--ease);
+  }
+
+  .terminal-bar:hover .terminal-dot { transform: scale(1.15); }
+  .terminal-dot.r { background: #ff5f57; }
+  .terminal-dot.y { background: #febc2e; }
+  .terminal-dot.g { background: #28c840; }
+
+  .terminal-title {
+    flex: 1;
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-dimmer);
+    font-family: "SF Mono", "Consolas", monospace;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .terminal-body {
+    padding: 20px 22px;
+    font-family: "SF Mono", "Cascadia Code", "JetBrains Mono", "Consolas", monospace;
+    font-size: 13.5px;
+    line-height: 1.65;
+    height: 400px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+  }
+
+  .terminal-body::-webkit-scrollbar { width: 8px; }
+  .terminal-body::-webkit-scrollbar-track { background: transparent; }
+  .terminal-body::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 4px;
+  }
+  .terminal-body::-webkit-scrollbar-thumb:hover { background: var(--accent-border); }
+
+  .t-line {
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin: 1px 0;
+    animation: t-appear 0.25s var(--ease) forwards;
+  }
+
+  @keyframes t-appear {
+    from { opacity: 0; transform: translateY(2px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .t-you { color: var(--accent); font-weight: 600; }
+  .t-rora { color: var(--purple); font-weight: 600; }
+  .t-arrow { color: var(--text-dimmer); }
+  .t-tool { color: var(--accent-light); }
+  .t-ok { color: var(--green); }
+  .t-err { color: var(--red); }
+  .t-dim { color: var(--text-dim); }
+  .t-dimmer { color: var(--text-dimmer); }
+  .t-white { color: var(--text); }
+  .t-accent { color: var(--accent); }
+  .t-purple { color: var(--purple); }
+
+  .t-input-line {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 4px;
+  }
+
+  .t-input {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: inherit;
+    font-size: inherit;
+    caret-color: var(--accent);
+    padding: 2px 0;
+  }
+
+  .t-input::placeholder { color: var(--text-dimmer); opacity: 0.7; }
+
+  .terminal-status {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-3);
+    font-family: "SF Mono", "Consolas", monospace;
+    font-size: 11.5px;
+    color: var(--text-dimmer);
+    flex-shrink: 0;
+  }
+
+  .terminal-status-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .terminal-status-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .terminal-status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: status-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes status-pulse {
+    0%, 100% { box-shadow: 0 0 8px var(--green); }
+    50% { box-shadow: 0 0 16px var(--green); }
+  }
+
+  .terminal-hint {
+    margin-top: 16px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-dimmer);
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .terminal-hint code {
+    background: var(--accent-soft);
+    padding: 3px 9px;
+    border-radius: 6px;
+    color: var(--accent-light);
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s var(--ease-bounce),
+                border-color 0.2s ease;
+    border: 1px solid transparent;
+  }
+
+  .terminal-hint code:hover {
+    background: var(--accent-border);
+    border-color: var(--accent-border);
+    transform: translateY(-2px);
+  }
+
+  /* ============ FEATURES ============ */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 18px;
+  }
+
+  .feature {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 30px 26px;
+    transition: transform 0.4s var(--ease),
+                border-color 0.3s ease,
+                box-shadow 0.4s var(--ease);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .feature::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(circle at 50% 50%,
+                var(--accent-soft), transparent 40%);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+  }
+
+  .feature:hover::before { opacity: 1; }
+
+  .feature:hover {
+    border-color: var(--accent-border);
+    transform: translateY(-6px);
+    box-shadow: 0 25px 50px var(--accent-soft);
+  }
+
+  .feature-icon {
+    width: 46px; height: 46px;
+    border-radius: 12px;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 18px;
+    font-size: 16px;
+    color: var(--accent-light);
+    font-family: "SF Mono", "Consolas", monospace;
+    font-weight: 700;
+    transition: all 0.5s var(--ease-bounce);
+    position: relative;
+    z-index: 1;
+  }
+
+  .feature:hover .feature-icon {
+    transform: scale(1.1) rotate(-6deg);
+    background: var(--accent);
+    color: var(--bg);
+    box-shadow: 0 8px 20px var(--accent-glow);
+  }
+
+  .feature h3 {
+    font-size: 17px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+    position: relative;
+    z-index: 1;
+  }
+
+  .feature p {
+    font-size: 14px;
+    color: var(--text-dim);
+    line-height: 1.6;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ============ INSTALL ============ */
+  .install-block {
+    max-width: 720px;
+    margin: 0 auto;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 26px 28px;
+    transition: background 0.6s var(--ease), border-color 0.6s var(--ease),
+                transform 0.4s var(--ease);
+  }
+
+  .install-block:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent-border);
+  }
+
+  .install-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 11px 0;
+    font-family: "SF Mono", "Cascadia Code", "Consolas", monospace;
+    font-size: 14px;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--border);
+    transition: padding-left 0.3s var(--ease);
+  }
+
+  .install-step:hover { padding-left: 6px; }
+
+  .install-step:last-child { border-bottom: none; }
+  .install-step::-webkit-scrollbar { display: none; }
+
+  .install-num {
+    color: var(--accent);
+    font-weight: 700;
+    user-select: none;
+    min-width: 18px;
+    flex-shrink: 0;
+  }
+
+  .install-cmd { color: var(--text); white-space: nowrap; }
+  .install-comment {
+    color: var(--text-dimmer);
+    margin-left: 10px;
+    white-space: nowrap;
+  }
+
+  /* ============ THEMES ============ */
+  .themes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+    gap: 12px;
+    max-width: 880px;
+    margin: 0 auto;
+  }
+
+  .theme-chip {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 13px 15px;
+    cursor: pointer;
+    transition: transform 0.3s var(--ease-bounce),
+                border-color 0.25s ease,
+                background 0.25s ease,
+                box-shadow 0.3s var(--ease);
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .theme-chip:hover {
+    border-color: var(--border-strong);
+    transform: translateY(-3px) scale(1.03);
+  }
+
+  .theme-chip.active {
+    border-color: var(--chip-color, var(--accent));
+    background: var(--bg-3);
+    box-shadow: 0 0 0 1px var(--chip-color, var(--accent)),
+                0 12px 30px var(--accent-soft);
+    transform: translateY(-3px) scale(1.03);
+  }
+
+  .theme-chip-name {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--text);
+    letter-spacing: -0.005em;
+  }
+
+  .theme-swatches { display: flex; gap: 5px; }
+
+  .theme-swatch {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.08);
+    transition: transform 0.3s var(--ease-bounce);
+  }
+
+  .theme-chip:hover .theme-swatch:nth-child(1) { transform: translateY(-2px); }
+  .theme-chip:hover .theme-swatch:nth-child(2) { transform: translateY(-3px); }
+  .theme-chip:hover .theme-swatch:nth-child(3) { transform: translateY(-2px); }
+
+  /* ============ COMMANDS SECTION ============ */
+  .commands-toolbar {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 40px;
+  }
+
+  .commands-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .cmd-card {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 20px 22px;
+    transition: border-color 0.25s ease,
+                transform 0.35s var(--ease),
+                box-shadow 0.35s var(--ease);
+  }
+
+  .cmd-card:hover {
+    border-color: var(--accent-border);
+    transform: translateY(-3px);
+    box-shadow: 0 15px 35px var(--accent-soft);
+  }
+
+  .cmd-cat {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    margin-bottom: 14px;
+  }
+
+  .cmd-item {
+    display: flex;
+    gap: 10px;
+    padding: 5px 0;
+    font-size: 13px;
+    line-height: 1.5;
+    align-items: baseline;
+    transition: padding-left 0.25s var(--ease);
+  }
+
+  .cmd-item:hover { padding-left: 5px; }
+
+  .cmd-name {
+    font-family: "SF Mono", "Consolas", monospace;
+    color: var(--accent-light);
+    font-weight: 600;
+    font-size: 12.5px;
+    flex-shrink: 0;
+    min-width: 130px;
+    word-break: break-word;
+  }
+
+  .cmd-desc {
+    color: var(--text-dim);
+    font-size: 13px;
+  }
+
+  /* ============ INSTRUCTION PANEL ============ */
+  .instruction-panel {
+    max-width: 900px;
+    margin: 40px auto 0;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0;
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 0.7s var(--ease),
+                opacity 0.5s ease,
+                padding 0.5s ease;
+  }
+
+  .instruction-panel.open {
+    max-height: 8000px;
+    opacity: 1;
+    padding: 32px 36px;
+  }
+
+  .instruction-panel h3 {
+    font-size: 20px;
+    margin-bottom: 14px;
+    color: var(--accent-light);
+  }
+
+  .instruction-panel h4 {
+    font-size: 15px;
+    margin: 22px 0 10px;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .instruction-panel p,
+  .instruction-panel li {
+    font-size: 14px;
+    color: var(--text-dim);
+    line-height: 1.65;
+  }
+
+  .instruction-panel ul {
+    padding-left: 20px;
+    margin: 8px 0;
+  }
+
+  .instruction-panel li {
+    margin: 4px 0;
+  }
+
+  .instruction-panel code {
+    background: var(--bg-3);
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-size: 12.5px;
+    color: var(--accent-light);
+  }
+
+  /* ============ FOOTER ============ */
+  footer {
+    padding: 60px 24px 80px;
+    text-align: center;
+    border-top: 1px solid var(--border);
+    color: var(--text-dimmer);
+    font-size: 13.5px;
+    transition: border-color 0.6s var(--ease);
+  }
+
+  .footer-inner { max-width: var(--max); margin: 0 auto; }
+
+  .footer-brand {
+    display: inline-flex;
+    align-items: center;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 10px;
+    font-size: 17px;
+  }
+
+  .footer-social {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin: 22px 0 28px;
+    flex-wrap: wrap;
+  }
+
+  .footer-social a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 100px;
+    background: var(--accent-soft);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 13.5px;
+    font-weight: 500;
+    transition: all 0.3s var(--ease-bounce);
+  }
+
+  .footer-social a:hover {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px var(--accent-glow);
+  }
+
+  .footer-social svg { width: 16px; height: 16px; fill: currentColor; }
+
+  .footer-links {
+    display: flex;
+    gap: 22px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .footer-links a {
+    color: var(--text-dim);
+    transition: color 0.25s ease;
+    font-size: 13px;
+    position: relative;
+  }
+
+  .footer-links a::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background: var(--accent);
+    transition: width 0.3s var(--ease);
+  }
+
+  .footer-links a:hover { color: var(--accent); }
+  .footer-links a:hover::after { width: 100%; }
+
+  /* ============ SCROLL REVEAL ============ */
+  [data-reveal] {
+    opacity: 0;
+    transform: translate3d(0, 40px, 0);
+    transition: opacity 0.9s var(--ease), transform 0.9s var(--ease);
+  }
+
+  [data-reveal].visible {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+
+  [data-reveal="left"] {
+    transform: translate3d(-40px, 0, 0);
+  }
+
+  [data-reveal="right"] {
+    transform: translate3d(40px, 0, 0);
+  }
+
+  [data-reveal="scale"] {
+    transform: scale(0.92);
+  }
+
+  [data-reveal="scale"].visible {
+    transform: scale(1);
+  }
+
+  [data-reveal][data-delay="1"] { transition-delay: 0.08s; }
+  [data-reveal][data-delay="2"] { transition-delay: 0.16s; }
+  [data-reveal][data-delay="3"] { transition-delay: 0.24s; }
+  [data-reveal][data-delay="4"] { transition-delay: 0.32s; }
+  [data-reveal][data-delay="5"] { transition-delay: 0.40s; }
+  [data-reveal][data-delay="6"] { transition-delay: 0.48s; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+    [data-reveal] { opacity: 1; transform: none; }
+    .hero-badge-dot { animation: none; }
+    .hero::before { animation: none; }
+    .hero-title { animation: none; }
+  }
+
+  /* ============ EASTER EGG: SYSTEM BREACH ============ */
+  @keyframes rora-shake {
+    0%, 100% { transform: translate(0, 0) rotate(0); }
+    10% { transform: translate(-6px, 2px) rotate(-0.6deg); }
+    20% { transform: translate(5px, -3px) rotate(0.5deg); }
+    30% { transform: translate(-4px, 4px) rotate(-0.4deg); }
+    40% { transform: translate(6px, -2px) rotate(0.7deg); }
+    50% { transform: translate(-5px, -4px) rotate(-0.5deg); }
+    60% { transform: translate(4px, 3px) rotate(0.4deg); }
+    70% { transform: translate(-3px, 5px) rotate(-0.3deg); }
+    80% { transform: translate(5px, -3px) rotate(0.5deg); }
+    90% { transform: translate(-4px, 2px) rotate(-0.4deg); }
+  }
+
+  body.rora-shaking,
+  body.rora-shaking nav {
+    animation: rora-shake 0.14s linear 10;
+    pointer-events: none;
+  }
+
+  body.rora-shaking::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: rgba(255,60,60,0.08);
+    pointer-events: none;
+    z-index: 99998;
+    animation: flash-red 0.2s ease 7;
+  }
+
+  @keyframes flash-red {
+    0%, 100% { opacity: 0; }
+    50% { opacity: 1; }
+  }
+
+  .breach-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: rgba(0,0,0,0.94);
+    display: none;
+    opacity: 0;
+    transition: opacity 0.35s ease;
+    overflow: hidden;
+    cursor: crosshair;
+  }
+
+  .breach-overlay.show {
+    display: block;
+    opacity: 1;
+  }
+
+  .breach-scanlines {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(255,60,60,0.05) 0px,
+      rgba(255,60,60,0.05) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    pointer-events: none;
+    animation: scanlines 0.4s linear infinite;
+  }
+
+  @keyframes scanlines {
+    from { transform: translateY(0); }
+    to { transform: translateY(6px); }
+  }
+
+  .breach-panel {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    padding: 28px 24px;
+    pointer-events: none;
+    text-align: center;
+    z-index: 2;
+  }
+
+  .breach-title {
+    font-family: "SF Mono", "Consolas", monospace;
+    font-size: 28px;
+    font-weight: 700;
+    color: #ff3c3c;
+    letter-spacing: 0.15em;
+    text-shadow: 0 0 20px rgba(255,60,60,0.9);
+    margin-bottom: 8px;
+    animation: breach-pulse 0.8s ease-in-out infinite;
+  }
+
+  @keyframes breach-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.55; }
+  }
+
+  .breach-sub {
+    font-family: "SF Mono", "Consolas", monospace;
+    font-size: 12.5px;
+    color: #ff9090;
+    letter-spacing: 0.08em;
+    margin-bottom: 20px;
+  }
+
+  .breach-bar {
+    max-width: 400px;
+    height: 6px;
+    margin: 0 auto 12px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 100px;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(255,60,60,0.35);
+  }
+
+  .breach-bar-fill {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, #ff3c3c, #ff8c3c);
+    transition: width 0.1s linear;
+    box-shadow: 0 0 10px rgba(255,60,60,0.7);
+  }
+
+  .breach-meta {
+    font-family: "SF Mono", "Consolas", monospace;
+    font-size: 12px;
+    color: #ff9090;
+    letter-spacing: 0.08em;
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+  }
+
+  .breach-meta strong {
+    color: #fff;
+    font-weight: 700;
+  }
+
+  .breach-node {
+    position: absolute;
+    width: 62px;
+    height: 62px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #ff5c5c, #8c1e1e);
+    border: 2px solid #ff6c6c;
+    color: #fff;
+    font-family: "SF Mono", "Consolas", monospace;
+    font-size: 24px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: translate(-50%, -50%) scale(0);
+    box-shadow: 0 0 30px rgba(255,60,60,0.7),
+                inset 0 0 20px rgba(255,255,255,0.15);
+    animation: node-pop 0.4s var(--ease-bounce) forwards,
+               node-throb 0.7s ease-in-out infinite 0.4s;
+    z-index: 3;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  @keyframes node-pop {
+    0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  }
+
+  @keyframes node-throb {
+    0%, 100% { box-shadow: 0 0 30px rgba(255,60,60,0.7), inset 0 0 20px rgba(255,255,255,0.15); }
+    50% { box-shadow: 0 0 55px rgba(255,60,60,1), inset 0 0 20px rgba(255,255,255,0.25); }
+  }
+
+  .breach-node:hover {
+    transform: translate(-50%, -50%) scale(1.1);
+    transition: transform 0.15s ease;
+  }
+
+  .breach-node.hit {
+    animation: node-hit 0.35s ease forwards;
+    pointer-events: none;
+  }
+
+  @keyframes node-hit {
+    0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    40% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; background: radial-gradient(circle at 30% 30%, #a0ffb0, #1e7828); border-color: #78dc96; }
+    100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+  }
+
+  .breach-overlay.win .breach-title {
+    color: #78dc96;
+    text-shadow: 0 0 20px rgba(120,220,150,0.9);
+    animation: none;
+  }
+  .breach-overlay.win .breach-sub { color: #a0ffb0; }
+  .breach-overlay.win .breach-bar-fill {
+    background: #78dc96;
+    box-shadow: 0 0 10px rgba(120,220,150,0.7);
+  }
+  .breach-overlay.win .breach-scanlines {
+    background: repeating-linear-gradient(0deg,
+      rgba(120,220,150,0.05) 0px, rgba(120,220,150,0.05) 1px,
+      transparent 1px, transparent 3px);
+  }
+
+  .breach-overlay.lose {
+    animation: breach-glitch 0.4s ease;
+  }
+  .breach-overlay.lose .breach-title {
+    animation: breach-glitch-text 0.15s steps(2) 10;
+  }
+
+  @keyframes breach-glitch {
+    0%, 100% { transform: translate(0); }
+    20% { transform: translate(-10px, 4px); }
+    40% { transform: translate(10px, -4px); }
+    60% { transform: translate(-5px, -4px); }
+    80% { transform: translate(5px, 5px); }
+  }
+
+  @keyframes breach-glitch-text {
+    0% { transform: translate(0); opacity: 1; }
+    50% { transform: translate(-3px, 0); opacity: 0.7; }
+    100% { transform: translate(3px, 0); opacity: 1; }
+  }
+
+  /* ============ MOBILE ============ */
+  @media (max-width: 720px) {
+    nav {
+      padding: 10px 16px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .nav-links { display: none; }
+    .nav-social a { width: 32px; height: 32px; }
+
+    .hero { padding: 110px 20px 60px; }
+    .hero::before { width: 400px; height: 400px; filter: none; }
+
+    .hero-cta {
+      flex-direction: column;
+      align-items: stretch;
+      max-width: 300px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .btn { justify-content: center; }
+
+    section { padding: 64px 20px; }
+    .section-head { margin-bottom: 40px; }
+
+    .terminal-body {
+      height: 340px;
+      padding: 16px 16px;
+      font-size: 12.5px;
+    }
+
+    .terminal-hint { font-size: 12px; gap: 6px; }
+    .terminal-hint code { font-size: 11px; padding: 2px 7px; }
+
+    .feature { padding: 24px 20px; }
+    .install-block { padding: 20px 18px; }
+    .install-step { font-size: 12.5px; gap: 10px; }
+
+    .themes-grid {
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 10px;
+    }
+
+    .theme-chip { padding: 11px 13px; }
+
+    .commands-grid {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .cmd-name { min-width: 110px; font-size: 12px; }
+
+    .instruction-panel.open { padding: 24px 22px; }
+
+    .footer-social { flex-direction: column; align-items: center; }
+    .footer-social a {
+      width: 100%;
+      max-width: 240px;
+      justify-content: center;
+    }
+
+    .breach-title { font-size: 20px; letter-spacing: 0.1em; }
+    .breach-sub { font-size: 11px; }
+    .breach-node { width: 52px; height: 52px; font-size: 20px; }
+    .breach-meta { font-size: 11px; gap: 16px; }
+  }
+
+  @media (max-width: 480px) {
+    nav {
+      background: var(--bg);
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+
+    .hero-stats { gap: 10px; }
+    .stat { padding: 8px 14px; font-size: 12.5px; }
+    .stat-num { font-size: 14px; }
+    .stat-label { font-size: 11.5px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    body.rora-shaking, body.rora-shaking nav { animation: none; }
+    body.rora-shaking::after { animation: none; opacity: 0.1; }
+    .breach-node { animation: none; transform: translate(-50%, -50%) scale(1); }
+    .breach-scanlines { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a class="nav-logo" href="#top" id="navLogo">Rora</a>
+    <div class="nav-links">
+      <a href="#demo">demo</a>
+      <a href="#features">features</a>
+      <a href="#commands">commands</a>
+      <a href="#install">install</a>
+      <a href="#themes">themes</a>
+    </div>
+    <div class="nav-social">
+      <a href="https://t.me/voighais" target="_blank" rel="noopener" aria-label="Telegram">
+        <svg viewBox="0 0 24 24"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg>
+      </a>
+      <a href="https://github.com/voighais" target="_blank" rel="noopener" aria-label="GitHub">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+      </a>
+    </div>
+  </div>
+</nav>
+
+<section class="hero" id="top">
+  <div class="hero-inner">
+    <div class="hero-badge" data-reveal>
+      <span class="hero-badge-dot"></span>
+      <span>v1.7 · local · free · no API keys</span>
+    </div>
+
+    <div class="hero-stats" data-reveal data-delay="1">
+      <a class="stat" href="https://github.com/voighais/RoraAI" target="_blank" rel="noopener">
+        <svg class="stat-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 .587l3.668 7.568 8.332 1.151-6.064 5.828 1.48 8.279L12 19.446l-7.416 3.967 1.48-8.279L0 9.306l8.332-1.151z"/>
+        </svg>
+        <span class="stat-num loading" id="statStars">...</span>
+        <span class="stat-label">stars</span>
+      </a>
+      <a class="stat" href="https://github.com/voighais/RoraAI/releases" target="_blank" rel="noopener">
+        <svg class="stat-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3v13.18l4.59-4.59L18 13l-6 6-6-6 1.41-1.41L12 16.18V3zM5 20h14v2H5z"/>
+        </svg>
+        <span class="stat-num loading" id="statDownloads">...</span>
+        <span class="stat-label">downloads</span>
+      </a>
+    </div>
+
+    <h1 class="hero-title" data-reveal data-delay="2">Rora</h1>
+
+    <p class="hero-sub" data-reveal data-delay="3">
+      A local AI agent that actually works on your computer. Creates files,
+      runs commands, opens your browser, manages processes. Offline, uncensored,
+      no subscriptions.
+    </p>
+
+    <div class="hero-cta" data-reveal data-delay="4">
+      <a class="btn btn-primary" href="https://github.com/voighais/RoraAI/releases/download/1/RoraAi.py">download RoraAi.py</a>
+      <a class="btn btn-download" href="https://github.com/voighais/RoraAI/releases/tag/1" target="_blank" rel="noopener">all releases</a>
+      <a class="btn btn-ghost" href="#demo">try the demo</a>
+    </div>
+
+    <div class="hero-code" data-reveal data-delay="5">
+      <div class="hero-code-line">
+        <span class="hero-code-prompt">$</span>
+        <span class="hero-code-cmd">pip install llama-cpp-python</span>
+      </div>
+      <div class="hero-code-line">
+        <span class="hero-code-prompt">$</span>
+        <span class="hero-code-cmd">python rora.py</span>
+      </div>
+      <div class="hero-code-line">
+        <span class="hero-code-prompt">$</span>
+        <span class="hero-code-comment"># works without internet</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="demo">
+  <div class="section-inner">
+    <div class="section-head" data-reveal>
+      <div class="section-tag">live demo</div>
+      <h2 class="section-title">Talk to Rora right here</h2>
+      <p class="section-sub">
+        This is a real terminal window. Try
+        <code style="color: var(--accent-light)">/theme halloween</code> or
+        <code style="color: var(--accent-light)">/help</code>.
+      </p>
+    </div>
+
+    <div class="terminal-wrap" data-reveal="scale" data-delay="1">
+      <div class="terminal">
+        <div class="terminal-bar">
+          <span class="terminal-dot r"></span>
+          <span class="terminal-dot y"></span>
+          <span class="terminal-dot g"></span>
+          <span class="terminal-title">rora — cmd.exe</span>
+        </div>
+        <div class="terminal-body" id="terminal"></div>
+        <div class="terminal-status">
+          <div class="terminal-status-left">
+            <div class="terminal-status-item">
+              <span class="terminal-status-dot"></span>
+              <span>connected</span>
+            </div>
+            <div class="terminal-status-item">
+              <span>theme:</span>
+              <span id="statusTheme" style="color: var(--accent); font-weight: 600;">basic</span>
+            </div>
+          </div>
+          <div class="terminal-status-item">
+            <span>qwen2.5-7b</span>
+          </div>
+        </div>
+      </div>
+      <div class="terminal-hint">
+        <code data-cmd="/theme halloween">/theme halloween</code>
+        <code data-cmd="/theme matrix">/theme matrix</code>
+        <code data-cmd="/theme dracula">/theme dracula</code>
+        <code data-cmd="/themes">/themes</code>
+        <code data-cmd="/help">/help</code>
+        <code data-cmd="/clear">/clear</code>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="section-inner">
+    <div class="section-head" data-reveal>
+      <div class="section-tag">features</div>
+      <h2 class="section-title">Not a toy. A tool.</h2>
+      <p class="section-sub">
+        21 built-in tools. All local, all under your control.
+      </p>
+    </div>
+
+    <div class="features">
+      <div class="feature" data-reveal>
+        <div class="feature-icon">01</div>
+        <h3>Files</h3>
+        <p>Create, read, edit, move, and delete files and folders. Recursive, any path.</p>
+      </div>
+      <div class="feature" data-reveal data-delay="1">
+        <div class="feature-icon">02</div>
+        <h3>Shell</h3>
+        <p>Runs shell commands in any directory. Works with maven, npm, git, python.</p>
+      </div>
+      <div class="feature" data-reveal data-delay="2">
+        <div class="feature-icon">03</div>
+        <h3>Browser</h3>
+        <p>Opens chrome, edge, firefox, brave with any URL. Searches Google if you pass a query.</p>
+      </div>
+      <div class="feature" data-reveal data-delay="3">
+        <div class="feature-icon">04</div>
+        <h3>Processes</h3>
+        <p>Lists running processes, kills by name. Won't touch critical system processes.</p>
+      </div>
+      <div class="feature" data-reveal data-delay="4">
+        <div class="feature-icon">05</div>
+        <h3>System</h3>
+        <p>Disk usage, time, date, popup notifications, timers. Through native OS APIs.</p>
+      </div>
+      <div class="feature" data-reveal data-delay="5">
+        <div class="feature-icon">06</div>
+        <h3>Safety</h3>
+        <p>Denylist with 45+ patterns. Blocks rm -rf /, mkfs, shutdown, ~/.ssh.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="commands">
+  <div class="section-inner">
+    <div class="section-head" data-reveal>
+      <div class="section-tag">commands</div>
+      <h2 class="section-title">Everything Rora can do</h2>
+      <p class="section-sub">
+        Full command reference. Download as .txt or read right here.
+      </p>
+    </div>
+
+    <div class="commands-toolbar" data-reveal>
+      <button class="btn btn-primary" id="btnDownload">download .txt</button>
+      <button class="btn btn-ghost" id="btnRead">read on site</button>
+    </div>
+
+    <div class="commands-grid" id="commandsGrid" data-reveal="scale" data-delay="1"></div>
+
+    <div class="instruction-panel" id="instructionPanel">
+      <h3>Full command reference</h3>
+      <p>All commands go in the <code>you ›</code> prompt and start with <code>/</code>. Plain text without a slash goes to the model as a request.</p>
+
+      <h4>Chats</h4>
+      <ul>
+        <li><code>/new</code> — start a new chat, current one is saved to <code>~/.rora/sessions/</code></li>
+        <li><code>/sessions</code> — list all saved chats with numbers and dates</li>
+        <li><code>/switch &lt;n&gt;</code> — switch to chat number n</li>
+        <li><code>/delete &lt;n&gt;</code> — delete chat n</li>
+        <li><code>/purge</code> — delete ALL chats (asks for confirmation)</li>
+        <li><code>/rename &lt;title&gt;</code> — rename current chat</li>
+        <li><code>/reset</code> — clear current chat history</li>
+      </ul>
+
+      <h4>Models & config</h4>
+      <ul>
+        <li><code>/models</code> — list all .gguf in <code>~/models</code>, current is marked</li>
+        <li><code>/model</code> — show current model + list</li>
+        <li><code>/model &lt;n&gt;</code> — switch to model n without restart</li>
+        <li><code>/reload-prompt</code> — reload <code>~/.rora/system_prompt.txt</code></li>
+        <li><code>/config</code> — show paths and current config values</li>
+      </ul>
+
+      <h4>Themes</h4>
+      <ul>
+        <li><code>/theme</code> — list all presets with color swatches</li>
+        <li><code>/theme &lt;name&gt;</code> — switch theme (basic, halloween, dracula, matrix, etc.)</li>
+        <li><code>/theme bg &lt;color&gt;</code> — set terminal background (#hex, R,G,B, or none)</li>
+        <li><code>/theme edit &lt;key&gt; &lt;value&gt;</code> — change a single color</li>
+        <li><code>/theme reset</code> — drop custom overrides</li>
+        <li><code>/theme save &lt;name&gt;</code> — save current as new preset</li>
+      </ul>
+
+      <h4>Files & shell</h4>
+      <ul>
+        <li><code>/cd &lt;path&gt;</code> — change working directory</li>
+        <li><code>/ls [path]</code> — list files in a folder</li>
+        <li><code>/open &lt;path&gt;</code> — open file/folder in file manager</li>
+        <li><code>/sh &lt;cmd&gt;</code> — run a shell command manually (through denylist)</li>
+      </ul>
+
+      <h4>Misc</h4>
+      <ul>
+        <li><code>/help</code> — help screen</li>
+        <li><code>/exit</code> — save and quit (same: <code>/quit</code>, <code>:q</code>)</li>
+      </ul>
+
+      <h4>Tools the model calls automatically</h4>
+      <p>The model can call these without a slash command — just describe the task:</p>
+      <ul>
+        <li><code>list_dir</code> — list files in a folder</li>
+        <li><code>read_file</code> — read a file</li>
+        <li><code>write_file</code> — create/overwrite a file</li>
+        <li><code>edit_file</code> — replace a substring in a file</li>
+        <li><code>append_file</code> — append to end</li>
+        <li><code>mkdir</code> — create a folder</li>
+        <li><code>delete_path</code> — delete file/folder</li>
+        <li><code>move_path</code> — move/rename</li>
+        <li><code>copy_path</code> — copy</li>
+        <li><code>find_files</code> — glob search</li>
+        <li><code>grep</code> — regex search inside files</li>
+        <li><code>open_path</code> — open in file manager</li>
+        <li><code>run_command</code> — run shell command (optionally in a folder)</li>
+        <li><code>open_browser</code> — open browser with URL</li>
+        <li><code>get_time</code> / <code>get_date</code> — time and date</li>
+        <li><code>process_list</code> — list processes</li>
+        <li><code>process_kill</code> — kill process by name</li>
+        <li><code>disk_usage</code> — disk space</li>
+        <li><code>timer</code> — timer with notification</li>
+        <li><code>notify</code> — popup notification</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="install">
+  <div class="section-inner">
+    <div class="section-head" data-reveal>
+      <div class="section-tag">install</div>
+      <h2 class="section-title">Three commands and done.</h2>
+      <p class="section-sub">One file, one dependency, 90 kilobytes.</p>
+    </div>
+
+    <div class="install-block" data-reveal="scale" data-delay="1">
+      <div class="install-step">
+        <span class="install-num">1.</span>
+        <span class="install-cmd">pip install llama-cpp-python</span>
+        <span class="install-comment"># engine</span>
+      </div>
+      <div class="install-step">
+        <span class="install-num">2.</span>
+        <span class="install-cmd">py rora.py</span>
+        <span class="install-comment"># launch</span>
+      </div>
+      <div class="install-step">
+        <span class="install-num">3.</span>
+        <span class="install-cmd">you › create folder KAKA on my desktop</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="themes">
+  <div class="section-inner">
+    <div class="section-head" data-reveal>
+      <div class="section-tag">themes</div>
+      <h2 class="section-title">12 presets. One click.</h2>
+      <p class="section-sub">
+        Click any preset and the whole page recolors. Inside Rora it works
+        through <code style="color: var(--accent-light)">/theme &lt;name&gt;</code>.
+      </p>
+    </div>
+
+    <div class="themes-grid" id="themesGrid" data-reveal="scale" data-delay="1"></div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">Rora</div>
+    <p>local AI agent for those who are tired of clouds</p>
+
+    <div class="footer-social">
+      <a href="https://t.me/voighais" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg>
+        <span>Telegram</span>
+      </a>
+      <a href="https://github.com/voighais" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+        <span>GitHub</span>
+      </a>
+      <a href="https://github.com/voighais/RoraAI/releases/tag/1" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24"><path d="M12 3v13.18l4.59-4.59L18 13l-6 6-6-6 1.41-1.41L12 16.18V3zM5 20h14v2H5z"/></svg>
+        <span>Releases</span>
+      </a>
+    </div>
+
+    <div class="footer-links">
+      <a href="#top">top</a>
+      <a href="#demo">demo</a>
+      <a href="#features">features</a>
+      <a href="#commands">commands</a>
+      <a href="#install">install</a>
+      <a href="#themes">themes</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function() {
+  'use strict';
+
+  /* ============ THEMES ============ */
+  const THEMES = {
+    basic: { accent: '#64aaff', light: '#96d2ff', deep: '#2349b4', purple: '#aa5adc', purpleDeep: '#642896', bg: '#0a0a12', bg2: '#10101a', bg3: '#16161f', bgNav: 'rgba(10,10,18,0.72)', text: '#e6ebf5', textDim: '#8892a6', textDimmer: '#4a5264', green: '#78dc96', red: '#f08282', yellow: '#f0d278', swatches: ['#64aaff', '#96d2ff', '#aa5adc'] },
+    halloween: { accent: '#ff8c3c', light: '#ffb464', deep: '#c85a1e', purple: '#aa5adc', purpleDeep: '#642896', bg: '#1e0f19', bg2: '#2a1522', bg3: '#35192a', bgNav: 'rgba(30,15,25,0.72)', text: '#ebdcdc', textDim: '#967882', textDimmer: '#5a4648', green: '#8ce696', red: '#e64646', yellow: '#ffd264', swatches: ['#ff8c3c', '#ffb464', '#aa5adc'] },
+    christmas: { accent: '#c81e28', light: '#ff5a5a', deep: '#8c0f19', purple: '#a05064', purpleDeep: '#5a1e28', bg: '#140a0a', bg2: '#1e1010', bg3: '#281414', bgNav: 'rgba(20,10,10,0.72)', text: '#faf0eb', textDim: '#aa9696', textDimmer: '#645050', green: '#3cb45a', red: '#f04646', yellow: '#fadc6e', swatches: ['#c81e28', '#3cb45a', '#fadc6e'] },
+    neon: { accent: '#ff3cc8', light: '#ff8ce6', deep: '#b41482', purple: '#b45aff', purpleDeep: '#6e28b4', bg: '#0f0a19', bg2: '#150e20', bg3: '#1c1228', bgNav: 'rgba(15,10,25,0.72)', text: '#faf0fa', textDim: '#aa82b4', textDimmer: '#6e4a82', green: '#5affc8', red: '#ff5082', yellow: '#ffe664', swatches: ['#ff3cc8', '#3cf0f0', '#b45aff'] },
+    ocean: { accent: '#3cbedc', light: '#82e6fa', deep: '#146482', purple: '#826ec8', purpleDeep: '#3c3278', bg: '#050f1e', bg2: '#0a1828', bg3: '#0e2232', bgNav: 'rgba(5,15,30,0.72)', text: '#e1f0fa', textDim: '#7896aa', textDimmer: '#465e72', green: '#5adcb4', red: '#e66e6e', yellow: '#f0c878', swatches: ['#3cbedc', '#82e6fa', '#826ec8'] },
+    matrix: { accent: '#3cff64', light: '#8cff9e', deep: '#0a7828', purple: '#64b482', purpleDeep: '#285a3c', bg: '#000a00', bg2: '#04100a', bg3: '#08180e', bgNav: 'rgba(0,10,0,0.75)', text: '#c8f0d2', textDim: '#6ea07a', textDimmer: '#3c6446', green: '#3cff64', red: '#c85050', yellow: '#c8f064', swatches: ['#3cff64', '#8cff9e', '#64b482'] },
+    sunset: { accent: '#ff7850', light: '#ffb482', deep: '#b43c28', purple: '#c864b4', purpleDeep: '#783278', bg: '#190a14', bg2: '#22101c', bg3: '#2c1628', bgNav: 'rgba(25,10,20,0.72)', text: '#fae6e1', textDim: '#b4828c', textDimmer: '#7a505c', green: '#c8c878', red: '#ff6464', yellow: '#ffdc82', swatches: ['#ff7850', '#ffb482', '#c864b4'] },
+    dracula: { accent: '#bd93f9', light: '#dcc0ff', deep: '#8c64c8', purple: '#bd93f9', purpleDeep: '#6e46aa', bg: '#282a36', bg2: '#2e3040', bg3: '#343648', bgNav: 'rgba(40,42,54,0.72)', text: '#f8f8f2', textDim: '#9691af', textDimmer: '#6272a4', green: '#50fa7b', red: '#ff5555', yellow: '#f1fa8c', swatches: ['#bd93f9', '#8be9fd', '#ff79c6'] },
+    nord: { accent: '#88c0d0', light: '#b4dce6', deep: '#466e82', purple: '#b48ead', purpleDeep: '#6e5a78', bg: '#2e3440', bg2: '#353b48', bg3: '#3b4252', bgNav: 'rgba(46,52,64,0.72)', text: '#eceff4', textDim: '#8ca0af', textDimmer: '#4c566a', green: '#a3be8c', red: '#bf616a', yellow: '#ebcb8b', swatches: ['#88c0d0', '#a3be8c', '#b48ead'] },
+    gruvbox: { accent: '#fe8019', light: '#fabd2f', deep: '#af3c14', purple: '#b16286', purpleDeep: '#783c5a', bg: '#282828', bg2: '#2e2e2e', bg3: '#3c3836', bgNav: 'rgba(40,40,40,0.72)', text: '#ebdbb2', textDim: '#a89984', textDimmer: '#665c54', green: '#b8bb26', red: '#fb4934', yellow: '#fabd2f', swatches: ['#fe8019', '#fabd2f', '#b16286'] },
+    tokyo: { accent: '#7aa2f7', light: '#aac8ff', deep: '#4664b4', purple: '#bb9af7', purpleDeep: '#6e5ab4', bg: '#1a1b26', bg2: '#1f2130', bg3: '#24283b', bgNav: 'rgba(26,27,38,0.72)', text: '#c0caf5', textDim: '#8289b0', textDimmer: '#414868', green: '#9ece6a', red: '#f7768e', yellow: '#e0af68', swatches: ['#7aa2f7', '#bb9af7', '#9ece6a'] },
+    mono: { accent: '#c8c8c8', light: '#f0f0f0', deep: '#6e6e6e', purple: '#b4b4b4', purpleDeep: '#6e6e6e', bg: '#0a0a0a', bg2: '#101010', bg3: '#181818', bgNav: 'rgba(10,10,10,0.72)', text: '#f5f5f5', textDim: '#969696', textDimmer: '#5a5a5a', green: '#c8c8c8', red: '#e6e6e6', yellow: '#dcdcdc', swatches: ['#c8c8c8', '#f0f0f0', '#6e6e6e'] }
+  };
+
+  const THEME_ORDER = ['basic','halloween','christmas','neon','ocean','matrix','sunset','dracula','nord','gruvbox','tokyo','mono'];
+
+  function hexToRgb(hex) {
+    const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return m ? [parseInt(m[1],16), parseInt(m[2],16), parseInt(m[3],16)] : [0,0,0];
+  }
+
+  let currentTheme = 'basic';
+  const root = document.documentElement;
+  const statusThemeEl = document.getElementById('statusTheme');
+
+  function applyTheme(name) {
+    const t = THEMES[name];
+    if (!t) return;
+    currentTheme = name;
+    const a = hexToRgb(t.accent).join(',');
+    const p = hexToRgb(t.purple).join(',');
+    root.style.setProperty('--accent', t.accent);
+    root.style.setProperty('--accent-light', t.light);
+    root.style.setProperty('--accent-deep', t.deep);
+    root.style.setProperty('--accent-soft', 'rgba(' + a + ',0.12)');
+    root.style.setProperty('--accent-border', 'rgba(' + a + ',0.30)');
+    root.style.setProperty('--accent-glow', 'rgba(' + a + ',0.45)');
+    root.style.setProperty('--purple', t.purple);
+    root.style.setProperty('--purple-deep', t.purpleDeep);
+    root.style.setProperty('--purple-soft', 'rgba(' + p + ',0.12)');
+    root.style.setProperty('--bg', t.bg);
+    root.style.setProperty('--bg-2', t.bg2);
+    root.style.setProperty('--bg-3', t.bg3);
+    root.style.setProperty('--bg-nav', t.bgNav);
+    root.style.setProperty('--text', t.text);
+    root.style.setProperty('--text-dim', t.textDim);
+    root.style.setProperty('--text-dimmer', t.textDimmer);
+    root.style.setProperty('--green', t.green);
+    root.style.setProperty('--red', t.red);
+    root.style.setProperty('--yellow', t.yellow);
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', t.bg);
+    if (statusThemeEl) statusThemeEl.textContent = name;
+    const favicon = document.querySelector('link[rel="icon"]');
+    if (favicon) {
+      const svg = "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23" + t.bg.replace('#','') + "'/%3E%3Ctext x='32' y='47' font-family='Arial Black,Arial,sans-serif' font-size='46' font-weight='900' fill='%23" + t.accent.replace('#','') + "' text-anchor='middle'%3ER%3C/text%3E%3C/svg%3E";
+      favicon.setAttribute('href', 'data:image/svg+xml,' + svg);
+    }
+    const chips = document.querySelectorAll('.theme-chip');
+    for (let i = 0; i < chips.length; i++) {
+      chips[i].classList.toggle('active', chips[i].dataset.theme === name);
+    }
+  }
+
+  /* ============ THEMES GRID ============ */
+  const grid = document.getElementById('themesGrid');
+  if (grid) {
+    const frag = document.createDocumentFragment();
+    THEME_ORDER.forEach(name => {
+      const t = THEMES[name];
+      const chip = document.createElement('div');
+      chip.className = 'theme-chip';
+      chip.dataset.theme = name;
+      chip.style.setProperty('--chip-color', t.accent);
+      const nameEl = document.createElement('div');
+      nameEl.className = 'theme-chip-name';
+      nameEl.textContent = name;
+      const sw = document.createElement('div');
+      sw.className = 'theme-swatches';
+      t.swatches.forEach(c => {
+        const s = document.createElement('div');
+        s.className = 'theme-swatch';
+        s.style.background = c;
+        sw.appendChild(s);
+      });
+      chip.appendChild(nameEl);
+      chip.appendChild(sw);
+      frag.appendChild(chip);
+    });
+    grid.appendChild(frag);
+    grid.addEventListener('click', e => {
+      const chip = e.target.closest('.theme-chip');
+      if (!chip) return;
+      applyTheme(chip.dataset.theme);
+      termPrint('<span class="t-dim">~ theme → ' + chip.dataset.theme + '</span>');
+    }, { passive: true });
+  }
+
+  /* ============ SCROLL REVEAL ============ */
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver(entries => {
+      for (let i = 0; i < entries.length; i++) {
+        if (entries[i].isIntersecting) {
+          entries[i].target.classList.add('visible');
+          io.unobserve(entries[i].target);
+        }
+      }
+    }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+    document.querySelectorAll('[data-reveal]').forEach(el => io.observe(el));
+  } else {
+    document.querySelectorAll('[data-reveal]').forEach(el => el.classList.add('visible'));
+  }
+
+  /* ============ TERMINAL ============ */
+  const term = document.getElementById('terminal');
+  let introPlayed = false;
+  let inputEl = null;
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  function termPrint(html) {
+    if (!term) return null;
+    const line = document.createElement('div');
+    line.className = 't-line';
+    line.innerHTML = html;
+    term.appendChild(line);
+    term.scrollTop = term.scrollHeight;
+    return line;
+  }
+
+  function termClear() { if (term) term.innerHTML = ''; }
+
+  function makePrompt() {
+    if (!term) return;
+    const line = document.createElement('div');
+    line.className = 't-input-line';
+    line.innerHTML = '<span class="t-you">you</span><span class="t-arrow">›</span><input class="t-input" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="type a command...">';
+    term.appendChild(line);
+    inputEl = line.querySelector('.t-input');
+    inputEl.addEventListener('keydown', onKeyDown);
+    term.scrollTop = term.scrollHeight;
+  }
+
+  function onKeyDown(e) {
+    if (e.key !== 'Enter') return;
+    const cmd = inputEl.value.trim();
+    if (!cmd) return;
+    const line = inputEl.parentElement;
+    line.remove();
+    termPrint('<span class="t-you">you</span> <span class="t-arrow">›</span> <span class="t-white">' + escapeHtml(cmd) + '</span>');
+    handleCommand(cmd);
+  }
+
+  function handleCommand(cmd) {
+    if (cmd === '/help') {
+      termPrint('<span class="t-dim">commands:</span>');
+      termPrint('  <span class="t-accent">/theme &lt;name&gt;</span> <span class="t-dimmer">switch theme</span>');
+      termPrint('  <span class="t-accent">/themes</span>        <span class="t-dimmer">list themes</span>');
+      termPrint('  <span class="t-accent">/clear</span>          <span class="t-dimmer">clear</span>');
+      termPrint('  <span class="t-accent">/about</span>          <span class="t-dimmer">about Rora</span>');
+      termPrint('  <span class="t-accent">/demo</span>           <span class="t-dimmer">show example</span>');
+      makePrompt();
+      return;
+    }
+    if (cmd === '/clear') { termClear(); makePrompt(); return; }
+    if (cmd === '/themes') {
+      termPrint('<span class="t-dim">available themes:</span>');
+      termPrint('  <span class="t-white">' + THEME_ORDER.join('  ') + '</span>');
+      makePrompt();
+      return;
+    }
+    if (cmd === '/about') {
+      termPrint('<span class="t-dim">Rora v1.7 — local AI agent.</span>');
+      termPrint('<span class="t-dim">21 tools, denylist, sessions, themes.</span>');
+      makePrompt();
+      return;
+    }
+    if (cmd === '/demo') { playDemo(); return; }
+    if (cmd.startsWith('/theme ')) {
+      const name = cmd.slice(7).trim().toLowerCase();
+      if (THEMES[name]) {
+        applyTheme(name);
+        termPrint('<span class="t-ok">●</span> <span class="t-dim">theme → ' + name + '</span>');
+      } else {
+        termPrint('<span class="t-err">✖</span> <span class="t-err">unknown theme: ' + escapeHtml(name) + '</span>');
+        termPrint('<span class="t-dimmer">available: ' + THEME_ORDER.join(', ') + '</span>');
+      }
+      makePrompt();
+      return;
+    }
+    if (cmd === '/theme') {
+      termPrint('<span class="t-dim">usage:</span> <span class="t-white">/theme &lt;name&gt;</span>');
+      termPrint('<span class="t-dimmer">current: ' + currentTheme + '</span>');
+      makePrompt();
+      return;
+    }
+    if (cmd.startsWith('/')) {
+      termPrint('<span class="t-err">✖</span> <span class="t-err">unknown command: ' + escapeHtml(cmd) + '</span>');
+      termPrint('<span class="t-dimmer">try /help</span>');
+      makePrompt();
+      return;
+    }
+    fakeAgentReply(cmd);
+  }
+
+  function fakeAgentReply(text) {
+    const line = termPrint('<span class="t-rora">rora</span> <span class="t-arrow">›</span> <span class="t-dimmer">thinking...</span>');
+    let dots = 0;
+    const iv = setInterval(() => {
+      dots = (dots + 1) % 4;
+      line.innerHTML = '<span class="t-rora">rora</span> <span class="t-arrow">›</span> <span class="t-dimmer">thinking' + '.'.repeat(dots) + '</span>';
+    }, 300);
+    setTimeout(() => {
+      clearInterval(iv);
+      line.remove();
+      termPrint('<span class="t-rora">rora</span> <span class="t-arrow">›</span> <span class="t-dim">this is a demo — I\'m not real here. run rora.py to make me actually do things.</span>');
+      termPrint('<span class="t-dimmer">try: /theme halloween</span>');
+      makePrompt();
+    }, 1400);
+  }
+
+  const DEMO_LINES = [
+    ['<span class="t-you">you</span> <span class="t-arrow">›</span> <span class="t-white">create folder KAKA on my desktop</span>', 350],
+    ['<span class="t-rora">rora</span> <span class="t-arrow">›</span> ', 200],
+    ['<span class="t-purple">○</span> <span class="t-tool">mkdir</span>  <span class="t-dim">&lt;home&gt;/Desktop/KAKA</span>', 300],
+    ['<span class="t-ok">●</span> <span class="t-dim">OK: created &lt;home&gt;/Desktop/KAKA</span>', 250],
+    ['', 200],
+    ['<span class="t-rora">rora</span> <span class="t-arrow">›</span> <span class="t-white">Done. Folder KAKA is on your desktop.</span>', 500],
+    ['', 200],
+    ['<span class="t-dim">── Qwen2.5-7B · 1.2s · ~12 tok ──</span>', 900],
+    ['', 300]
+  ];
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  async function playDemo() {
+    termClear();
+    for (let i = 0; i < DEMO_LINES.length; i++) {
+      const [html, delay] = DEMO_LINES[i];
+      if (html) termPrint(html);
+      await sleep(delay);
+    }
+    makePrompt();
+  }
+
+  if (term) {
+    if ('IntersectionObserver' in window) {
+      const termObserver = new IntersectionObserver(entries => {
+        for (let i = 0; i < entries.length; i++) {
+          if (entries[i].isIntersecting && !introPlayed) {
+            introPlayed = true;
+            setTimeout(playDemo, 350);
+            termObserver.disconnect();
+          }
+        }
+      }, { threshold: 0.35 });
+      termObserver.observe(term);
+    } else {
+      playDemo();
+    }
+    term.addEventListener('click', e => {
+      if (inputEl && e.target.tagName !== 'INPUT' && !e.target.closest('.t-input-line')) {
+        inputEl.focus({ preventScroll: true });
+      }
+    }, { passive: true });
+  }
+
+  document.querySelectorAll('.terminal-hint [data-cmd]').forEach(el => {
+    el.addEventListener('click', () => {
+      if (!inputEl) return;
+      inputEl.value = el.dataset.cmd;
+      inputEl.focus({ preventScroll: true });
+      const evt = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
+      inputEl.dispatchEvent(evt);
+    }, { passive: true });
+  });
+
+  /* ============ COMMANDS DATA ============ */
+  const COMMANDS = [
+    { cat: 'chats', items: [
+      { name: '/new', desc: 'start a new chat' },
+      { name: '/sessions', desc: 'list saved chats' },
+      { name: '/switch <n>', desc: 'switch to chat n' },
+      { name: '/delete <n>', desc: 'delete chat n' },
+      { name: '/purge', desc: 'delete ALL chats' },
+      { name: '/rename <title>', desc: 'rename current' },
+      { name: '/reset', desc: 'clear history' }
+    ]},
+    { cat: 'models', items: [
+      { name: '/models', desc: 'list .gguf files' },
+      { name: '/model', desc: 'show current' },
+      { name: '/model <n>', desc: 'switch to model n' },
+      { name: '/reload-prompt', desc: 'reload system prompt' },
+      { name: '/config', desc: 'show config' }
+    ]},
+    { cat: 'themes', items: [
+      { name: '/theme', desc: 'list presets' },
+      { name: '/theme <name>', desc: 'switch theme' },
+      { name: '/theme bg <c>', desc: 'terminal background' },
+      { name: '/theme edit <k> <v>', desc: 'change a color' },
+      { name: '/theme reset', desc: 'drop overrides' },
+      { name: '/theme save <n>', desc: 'save as preset' }
+    ]},
+    { cat: 'files & shell', items: [
+      { name: '/cd <path>', desc: 'change cwd' },
+      { name: '/ls [path]', desc: 'list files' },
+      { name: '/open <path>', desc: 'open in file manager' },
+      { name: '/sh <cmd>', desc: 'run shell command' }
+    ]},
+    { cat: 'model tools', items: [
+      { name: 'list_dir', desc: 'list files' },
+      { name: 'read_file', desc: 'read a file' },
+      { name: 'write_file', desc: 'create/overwrite' },
+      { name: 'edit_file', desc: 'replace substring' },
+      { name: 'append_file', desc: 'append to end' },
+      { name: 'mkdir', desc: 'create folder' },
+      { name: 'delete_path', desc: 'delete' },
+      { name: 'move_path', desc: 'move' },
+      { name: 'copy_path', desc: 'copy' },
+      { name: 'find_files', desc: 'glob search' },
+      { name: 'grep', desc: 'regex inside files' },
+      { name: 'open_path', desc: 'open in OS' },
+      { name: 'run_command', desc: 'shell command' },
+      { name: 'open_browser', desc: 'open browser' },
+      { name: 'get_time', desc: 'current time' },
+      { name: 'get_date', desc: 'current date' },
+      { name: 'process_list', desc: 'list processes' },
+      { name: 'process_kill', desc: 'kill process' },
+      { name: 'disk_usage', desc: 'disk space' },
+      { name: 'timer', desc: 'set a timer' },
+      { name: 'notify', desc: 'popup notification' }
+    ]}
+  ];
+
+  const commandsGrid = document.getElementById('commandsGrid');
+  if (commandsGrid) {
+    const frag = document.createDocumentFragment();
+    COMMANDS.forEach(group => {
+      const card = document.createElement('div');
+      card.className = 'cmd-card';
+      const cat = document.createElement('div');
+      cat.className = 'cmd-cat';
+      cat.textContent = group.cat;
+      card.appendChild(cat);
+      group.items.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'cmd-item';
+        const n = document.createElement('span');
+        n.className = 'cmd-name';
+        n.textContent = item.name;
+        const d = document.createElement('span');
+        d.className = 'cmd-desc';
+        d.textContent = item.desc;
+        row.appendChild(n);
+        row.appendChild(d);
+        card.appendChild(row);
+      });
+      frag.appendChild(card);
+    });
+    commandsGrid.appendChild(frag);
+  }
+
+  /* ============ INSTRUCTION TOGGLE ============ */
+  const panel = document.getElementById('instructionPanel');
+  const btnRead = document.getElementById('btnRead');
+  const btnDownload = document.getElementById('btnDownload');
+
+  if (btnRead && panel) {
+    btnRead.addEventListener('click', () => {
+      const open = panel.classList.toggle('open');
+      btnRead.textContent = open ? 'collapse' : 'read on site';
+      if (open) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
+  if (btnDownload) {
+    btnDownload.addEventListener('click', () => {
+      const lines = [];
+      lines.push('===============================================');
+      lines.push('           RORA — command reference');
+      lines.push('===============================================');
+      lines.push('');
+      lines.push('All commands go in the "you >" prompt and start with /.');
+      lines.push('Plain text without a slash goes to the model as a request.');
+      lines.push('');
+      const sections = {
+        'CHATS': [['/new','start a new chat, current is saved'],['/sessions','list all saved chats'],['/switch <n>','switch to chat n'],['/delete <n>','delete chat n'],['/purge','delete ALL chats (asks confirmation)'],['/rename <title>','rename current chat'],['/reset','clear current chat history']],
+        'MODELS & CONFIG': [['/models','list .gguf in ~/models'],['/model','show current model'],['/model <n>','switch to model n'],['/reload-prompt','reload system_prompt.txt'],['/config','show paths and config values']],
+        'THEMES': [['/theme','list all presets'],['/theme <name>','switch theme'],['/theme bg <color>','set terminal background'],['/theme edit <key> <value>','change a single color'],['/theme reset','drop custom overrides'],['/theme save <name>','save as new preset']],
+        'FILES & SHELL': [['/cd <path>','change working directory'],['/ls [path]','list files in a folder'],['/open <path>','open in file manager'],['/sh <cmd>','run a shell command']],
+        'MISC': [['/help','help screen'],['/exit','save and quit']],
+        'MODEL TOOLS (called automatically)': [['list_dir','list files'],['read_file','read a file'],['write_file','create/overwrite'],['edit_file','replace substring'],['append_file','append to end'],['mkdir','create folder'],['delete_path','delete'],['move_path','move/rename'],['copy_path','copy'],['find_files','glob search'],['grep','regex inside files'],['open_path','open in file manager'],['run_command','shell command'],['open_browser','open browser'],['get_time','current time'],['get_date','current date'],['process_list','list processes'],['process_kill','kill process'],['disk_usage','disk space'],['timer','set timer'],['notify','popup notification']]
+      };
+      Object.keys(sections).forEach(cat => {
+        lines.push('--- ' + cat + ' ---');
+        lines.push('');
+        sections[cat].forEach(([name, desc]) => {
+          lines.push('  ' + name.padEnd(28) + '- ' + desc);
+        });
+        lines.push('');
+      });
+      lines.push('===============================================');
+      lines.push('  github.com/voighais  |  t.me/voighais');
+      lines.push('===============================================');
+      const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'rora-commands.txt';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    });
+  }
+
+  /* ============ GITHUB STATS ============ */
+  const GITHUB_REPO = 'voighais/RoraAI';
+  const STATS_CACHE_KEY = 'rora_stats_cache';
+  const STATS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+  function formatNum(n) {
+    if (n === null || n === undefined || isNaN(n)) return '—';
+    if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+    if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+    return String(n);
+  }
+
+  function setStat(id, value) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('loading');
+    el.textContent = formatNum(value);
+  }
+
+  async function fetchGitHubStats() {
+    // check cache first
+    try {
+      const cached = localStorage.getItem(STATS_CACHE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && (Date.now() - parsed.ts) < STATS_CACHE_TTL) {
+          setStat('statStars', parsed.stars);
+          setStat('statDownloads', parsed.downloads);
+          return;
+        }
+      }
+    } catch (e) {}
+
+    let stars = null;
+    let downloads = 0;
+
+    try {
+      const repoRes = await fetch('https://api.github.com/repos/' + GITHUB_REPO, {
+        headers: { 'Accept': 'application/vnd.github+json' }
+      });
+      if (repoRes.ok) {
+        const repoData = await repoRes.json();
+        stars = repoData.stargazers_count;
+      }
+    } catch (e) {
+      console.warn('stars fetch failed:', e);
+    }
+
+    try {
+      const relRes = await fetch('https://api.github.com/repos/' + GITHUB_REPO + '/releases', {
+        headers: { 'Accept': 'application/vnd.github+json' }
+      });
+      if (relRes.ok) {
+        const releases = await relRes.json();
+        if (Array.isArray(releases)) {
+          downloads = releases.reduce((sum, rel) => {
+            if (!Array.isArray(rel.assets)) return sum;
+            return sum + rel.assets.reduce((s, a) => s + (a.download_count || 0), 0);
+          }, 0);
+        }
+      }
+    } catch (e) {
+      console.warn('downloads fetch failed:', e);
+    }
+
+    if (stars !== null) setStat('statStars', stars);
+    else setStat('statStars', '—');
+
+    setStat('statDownloads', downloads);
+
+    try {
+      localStorage.setItem(STATS_CACHE_KEY, JSON.stringify({
+        ts: Date.now(),
+        stars: stars,
+        downloads: downloads
+      }));
+    } catch (e) {}
+  }
+
+  fetchGitHubStats();
+
+  /* ============ EASTER EGG: SYSTEM BREACH ============ */
+  const logo = document.getElementById('navLogo');
+  let breachClicks = 0;
+  let breachClickTimer = null;
+  let breachActive = false;
+  let breachOverlay = null;
+  let breachScore = 0;
+  let breachTimeLeft = 0;
+  let breachTickInterval = null;
+  let breachTimers = [];
+
+  const BREACH_TOTAL = 6;
+  const BREACH_TIME = 8000;
+
+  function initBreachOverlay() {
+    if (breachOverlay) return breachOverlay;
+    const el = document.createElement('div');
+    el.className = 'breach-overlay';
+    el.id = 'breachOverlay';
+    el.innerHTML =
+      '<div class="breach-scanlines"></div>' +
+      '<div class="breach-panel">' +
+        '<div class="breach-title" id="breachTitle">SYSTEM BREACH</div>' +
+        '<div class="breach-sub" id="breachSub">click the nodes to restore the site</div>' +
+        '<div class="breach-bar"><div class="breach-bar-fill" id="breachBarFill"></div></div>' +
+        '<div class="breach-meta">' +
+          '<span>nodes: <strong id="breachScore">0</strong>/' + BREACH_TOTAL + '</span>' +
+          '<span>time: <strong id="breachTime">8.0</strong>s</span>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(el);
+    breachOverlay = el;
+    return el;
+  }
+
+  function spawnNode(overlay) {
+    const node = document.createElement('button');
+    node.className = 'breach-node';
+    const x = 10 + Math.random() * 80;
+    const y = 20 + Math.random() * 60;
+    node.style.left = x + '%';
+    node.style.top = y + '%';
+    const icons = ['!', '?', '#', '*', 'X', '0', '1', '%', '&', '$'];
+    node.textContent = icons[Math.floor(Math.random() * icons.length)];
+
+    node.addEventListener('click', e => {
+      e.stopPropagation();
+      if (!breachActive || node.classList.contains('hit')) return;
+      node.classList.add('hit');
+      breachScore++;
+      const sc = document.getElementById('breachScore');
+      if (sc) sc.textContent = breachScore;
+      setTimeout(() => node.remove(), 350);
+      if (breachScore >= BREACH_TOTAL) winBreach();
+    });
+
+    overlay.appendChild(node);
+  }
+
+  function startBreach() {
+    if (breachActive) return;
+    breachActive = true;
+    document.body.classList.add('rora-shaking');
+
+    const shakeTime = 1400;
+    breachTimers.push(setTimeout(() => {
+      document.body.classList.remove('rora-shaking');
+      openBreachGame();
+    }, shakeTime));
+  }
+
+  function openBreachGame() {
+    const overlay = initBreachOverlay();
+    overlay.classList.remove('win', 'lose');
+    overlay.classList.add('show');
+
+    breachScore = 0;
+    breachTimeLeft = BREACH_TIME;
+
+    const sc = document.getElementById('breachScore');
+    const tm = document.getElementById('breachTime');
+    const bar = document.getElementById('breachBarFill');
+    const title = document.getElementById('breachTitle');
+    const sub = document.getElementById('breachSub');
+    if (sc) sc.textContent = '0';
+    if (tm) tm.textContent = (BREACH_TIME / 1000).toFixed(1);
+    if (bar) bar.style.width = '100%';
+    if (title) title.textContent = 'SYSTEM BREACH';
+    if (sub) sub.textContent = 'click the nodes to restore the site';
+
+    const step = BREACH_TIME / (BREACH_TOTAL + 1);
+    for (let i = 0; i < BREACH_TOTAL; i++) {
+      breachTimers.push(setTimeout(() => {
+        if (!breachActive) return;
+        spawnNode(overlay);
+      }, i * step + 150));
+    }
+
+    breachTickInterval = setInterval(() => {
+      breachTimeLeft -= 100;
+      const t = Math.max(0, breachTimeLeft / 1000);
+      if (tm) tm.textContent = t.toFixed(1);
+      if (bar) bar.style.width = ((breachTimeLeft / BREACH_TIME) * 100) + '%';
+      if (breachTimeLeft <= 0 && breachScore < BREACH_TOTAL) loseBreach();
+    }, 100);
+  }
+
+  function clearBreachTimers() {
+    breachTimers.forEach(t => clearTimeout(t));
+    breachTimers = [];
+    if (breachTickInterval) {
+      clearInterval(breachTickInterval);
+      breachTickInterval = null;
+    }
+  }
+
+  function winBreach() {
+    if (!breachActive) return;
+    clearBreachTimers();
+    breachActive = false;
+
+    const overlay = breachOverlay;
+    if (overlay) {
+      overlay.classList.add('win');
+      const title = document.getElementById('breachTitle');
+      const sub = document.getElementById('breachSub');
+      if (title) title.textContent = 'SYSTEM RESTORED';
+      if (sub) sub.textContent = 'nice job — everything is back online';
+    }
+    breachTimers.push(setTimeout(() => {
+      if (overlay) overlay.querySelectorAll('.breach-node').forEach(n => n.remove());
+    }, 200));
+    breachTimers.push(setTimeout(closeBreach, 2200));
+  }
+
+  function loseBreach() {
+    if (!breachActive) return;
+    clearBreachTimers();
+    breachActive = false;
+
+    const overlay = breachOverlay;
+    if (overlay) {
+      overlay.classList.add('lose');
+      const title = document.getElementById('breachTitle');
+      const sub = document.getElementById('breachSub');
+      if (title) title.textContent = 'SYSTEM FAILED';
+      if (sub) sub.textContent = 'connection lost...';
+    }
+    breachTimers.push(setTimeout(() => {
+      if (overlay) overlay.querySelectorAll('.breach-node').forEach(n => n.remove());
+    }, 200));
+    breachTimers.push(setTimeout(closeBreach, 2600));
+  }
+
+  function closeBreach() {
+    const overlay = breachOverlay;
+    if (!overlay) return;
+    overlay.classList.remove('show', 'win', 'lose');
+    overlay.querySelectorAll('.breach-node').forEach(n => n.remove());
+    breachActive = false;
+  }
+
+  if (logo) {
+    logo.addEventListener('click', e => {
+      if (breachActive) { e.preventDefault(); return; }
+      breachClicks++;
+      clearTimeout(breachClickTimer);
+      breachClickTimer = setTimeout(() => { breachClicks = 0; }, 2000);
+
+      if (breachClicks >= 5) {
+        breachClicks = 0;
+        e.preventDefault();
+        startBreach();
+      }
+    });
+  }
+
+  applyTheme('basic');
+})();
+</script>
+</body>
+</html>
